@@ -3,31 +3,26 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/shenyisyn/goft-gin/goft"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8sapi/src/services"
 )
 
 type DeploymentCtl struct {
 	K8sClient *kubernetes.Clientset `inject:"-"`
+	DepService *services.DeploymentService  `inject:"-"`  //首字母一定要大写
 }
 
 func NewDeploymentCtl() *DeploymentCtl {
 	return &DeploymentCtl{}
 }
-
 func(this *DeploymentCtl) GetList(c *gin.Context) goft.Json{
-	list,err:=this.K8sClient.AppsV1().Deployments("default").
-		List(c,metav1.ListOptions{})
-	goft.Error(err)
-	return list
+	return this.DepService.ListAll("default")
 }
 
 func(this *DeploymentCtl)  Build(goft *goft.Goft){
 	//路由
 	goft.Handle("GET","/deployments",this.GetList)
 }
-
-
 func(*DeploymentCtl) Name() string{
 	return "DeploymentCtl"
 }

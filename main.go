@@ -7,7 +7,13 @@ import (
 )
 
 func main() {
-	goft.Ignite().Config(configs.NewK8sConfig()).
+	goft.Ignite().Config(
+		configs.NewK8sHandler(),  //1
+		configs.NewK8sConfig(), //2
+		configs.NewK8sMaps(), //3
+		configs.NewServiceConfig(), //4
+		).
 		Mount("v1",controllers.NewDeploymentCtl()).
 		Launch()
+
 }
