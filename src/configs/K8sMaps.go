@@ -11,9 +11,14 @@ type K8sMaps struct {
 func NewK8sMaps() *K8sMaps {
 	return &K8sMaps{}
 }
-
 //初始化 deploymentmap
 func(this *K8sMaps) InitDepMap() *core.DeploymentMap{
 	return &core.DeploymentMap{}
 }
+//初始化 podmap
+func(this *K8sMaps) InitPodMap() *core.PodMapStruct{
+	return &core.PodMapStruct{}
+}
+
+
 

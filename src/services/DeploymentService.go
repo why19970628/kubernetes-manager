@@ -12,11 +12,9 @@ type DeploymentService struct {
 	DepMap *core.DeploymentMap `inject:"-"`
 	Common *CommonService `inject:"-"`
 }
-
 func NewDeploymentService() *DeploymentService {
 	return &DeploymentService{}
 }
-
 func(*DeploymentService) getDeploymentCondition(dep *v1.Deployment) string{
 	for _,item:=range dep.Status.Conditions{
 		if string(item.Type)=="Available" && string(item.Status)!="True"{

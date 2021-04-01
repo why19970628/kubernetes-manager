@@ -11,33 +11,32 @@ import (
 
 type K8sConfig struct {
 	DepHandler *core.DepHandler `inject:"-"`
+	PodHandler *core.PodHandler `inject:"-"`
 }
-
-
 func NewK8sConfig() *K8sConfig {
 	return &K8sConfig{}
 }
-
-
+//初始化客户端
 func(*K8sConfig) InitClient() *kubernetes.Clientset{
 	config:=&rest.Config{
 		Host:"http://121.36.226.197:9090",
 		BearerToken: "9e92eb8825d529819191f4eb9de32ab6",
- 	}
+	}
 	c,err:=kubernetes.NewForConfig(config)
 	if err!=nil{
 		log.Fatal(err)
 	}
 	return c
 }
-
-
 //初始化Informer
 func(this *K8sConfig) InitInformer() informers.SharedInformerFactory{
 	fact:=informers.NewSharedInformerFactory(this.InitClient(), 0)
 
 	depInformer:=fact.Apps().V1().Deployments()
 	depInformer.Informer().AddEventHandler(this.DepHandler)
+
+	podInformer:=fact.Core().V1().Pods() //监听pod
+	podInformer.Informer().AddEventHandler(this.PodHandler)
 
 	fact.Start(wait.NeverStop)
 

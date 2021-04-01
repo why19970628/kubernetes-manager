@@ -12,3 +12,7 @@ func NewK8sHandler() *K8sHandler {
 func(this *K8sHandler) DepHandlers() *core.DepHandler{
 	return &core.DepHandler{}
 }
+// pod handler
+func(this *K8sHandler) PodHandlers() *core.PodHandler{
+	return &core.PodHandler{}
+}

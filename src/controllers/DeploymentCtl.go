@@ -16,12 +16,16 @@ func NewDeploymentCtl() *DeploymentCtl {
 	return &DeploymentCtl{}
 }
 func(this *DeploymentCtl) GetList(c *gin.Context) goft.Json{
-	return this.DepService.ListAll("default")
-}
+	ns:=c.DefaultQuery("ns","default") // GET /deployments?ns=xxx
+	return gin.H{
+		"code":20000,
+		"data":this.DepService.ListAll(ns),
+	}
 
+}
 func(this *DeploymentCtl)  Build(goft *goft.Goft){
 	//路由
-	goft.Handle("GET","/deployments",this.GetList)
+	goft.Handle("GET,POST,OPTIONS","/deployments",this.GetList)
 }
 func(*DeploymentCtl) Name() string{
 	return "DeploymentCtl"
