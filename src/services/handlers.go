@@ -144,6 +144,7 @@ func(this *EventHandler) OnDelete(obj interface{}){
 // ingress相关handler
 type IngressHandler struct {
 	IngressMap *IngressMapStruct  `inject:"-"`
+	IngressService *IngressService `inject:"-"`
 }
 func(this *IngressHandler) OnAdd(obj interface{}){
 	this.IngressMap.Add(obj.(*v1beta1.Ingress))
@@ -152,7 +153,7 @@ func(this *IngressHandler) OnAdd(obj interface{}){
 		gin.H{
 			"type":"ingress",
 			"result":gin.H{"ns":ns,
-				"data":this.IngressMap.ListAll(ns)},
+				"data":this.IngressService.ListIngress(ns)},
 		},
 	)
 }
@@ -167,7 +168,7 @@ func(this *IngressHandler) OnUpdate(oldObj, newObj interface{}){
 		gin.H{
 			"type":"ingress",
 			"result":gin.H{"ns":ns,
-				"data":this.IngressMap.ListAll(ns)},
+				"data":this.IngressService.ListIngress(ns)},
 		},
 	)
 
@@ -179,7 +180,50 @@ func(this *IngressHandler) OnDelete(obj interface{}){
 		gin.H{
 			"type":"ingress",
 			"result":gin.H{"ns":ns,
-				"data":this.IngressMap.ListAll(ns)},
+				"data":this.IngressService.ListIngress(ns)},
+		},
+	)
+}
+
+
+// Service 相关handler
+type ServiceHandler struct {
+	SvcMap *ServiceMapStruct  `inject:"-"`
+}
+func(this *ServiceHandler) OnAdd(obj interface{}){
+	this.SvcMap.Add(obj.(*corev1.Service))
+	ns:=obj.(*corev1.Service).Namespace
+	wscore.ClientMap.SendAll(
+		gin.H{
+			"type":"service",
+			"result":gin.H{"ns":ns,
+				"data":this.SvcMap.ListAll(ns)},
+		},
+	)
+}
+func(this *ServiceHandler) OnUpdate(oldObj, newObj interface{}){
+	err:=this.SvcMap.Update(newObj.(*corev1.Service))
+	if err!=nil{
+		log.Println(err)
+		return
+	}
+	ns:=newObj.(*corev1.Service).Namespace
+	wscore.ClientMap.SendAll(
+		gin.H{
+			"type":"service",
+			"result":gin.H{"ns":ns,
+				"data":this.SvcMap.ListAll(ns)},
+		},
+	)
+}
+func(this *ServiceHandler) OnDelete(obj interface{}){
+	this.SvcMap.Delete(obj.(*corev1.Service))
+	ns:=obj.(*corev1.Service).Namespace
+	wscore.ClientMap.SendAll(
+		gin.H{
+			"type":"service",
+			"result":gin.H{"ns":ns,
+				"data":this.SvcMap.ListAll(ns)},
 		},
 	)
 }

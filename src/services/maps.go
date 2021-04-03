@@ -293,19 +293,87 @@ func(this *IngressMapStruct) Delete(ingress *v1beta1.Ingress){
 		}
 	}
 }
-func(this *IngressMapStruct) ListAll(ns string)[]*models.IngressModel{
+func(this *IngressMapStruct) ListAll(ns string)[]*v1beta1.Ingress{
 	     if list,ok:=this.data.Load(ns);ok{
 	     	 newList:=list.([]*v1beta1.Ingress)
 			 sort.Sort(V1Beta1Ingress(newList))//  按时间倒排序
-			 ret:=make([]*models.IngressModel,len(newList))
-			 for i,item:=range newList{
-				 ret[i]=&models.IngressModel{
-				 	Name:item.Name,
-				 	CreateTime:item.CreationTimestamp.Format("2006-01-02 15:04:05"),
-				 	NameSpace:item.Namespace,
-				 }
-			 }
-			 return ret
+			 return newList
+	     	 //之前获取列表代码是写在这的，现在移动到了 IngressService中
 		 }
-	     return []*models.IngressModel{} //返回空列表
+	     return []*v1beta1.Ingress{} //返回空列表
+}
+
+
+
+type ServiceMapStruct struct {
+	data sync.Map   // [ns string] []*v1.Service
+}
+
+type CoreV1Service []*corev1.Service
+func(this CoreV1Service) Len() int{
+	return len(this)
+}
+func(this CoreV1Service) Less(i, j int) bool{
+	//根据时间排序    倒排序
+	return this[i].CreationTimestamp.Time.After(this[j].CreationTimestamp.Time)
+}
+func(this CoreV1Service) Swap(i, j int){
+	this[i],this[j]=this[j],this[i]
+}
+//获取单个Service
+func(this *ServiceMapStruct) Get(ns string,name string) *corev1.Service{
+	if items,ok:=this.data.Load(ns);ok{
+		for _,item:=range items.([]*corev1.Service){
+			if item.Name==name{
+				return item
+			}
+		}
+	}
+	return nil
+}
+func(this *ServiceMapStruct) Add(svc *corev1.Service){
+	if list,ok:=this.data.Load(svc.Namespace);ok{
+		list=append(list.([]*corev1.Service),svc)
+		this.data.Store(svc.Namespace,list)
+	}else{
+		this.data.Store(svc.Namespace,[]*corev1.Service{svc})
+	}
+}
+func(this *ServiceMapStruct) Update(svc *corev1.Service) error {
+	if list,ok:=this.data.Load(svc.Namespace);ok{
+		for i,range_pod:=range list.([]*corev1.Service){
+			if range_pod.Name==svc.Name{
+				list.([]*corev1.Service)[i]=svc
+			}
+		}
+		return nil
+	}
+	return fmt.Errorf("service-%s not found",svc.Name)
+}
+func(this *ServiceMapStruct) Delete(svc *corev1.Service){
+	if list,ok:=this.data.Load(svc.Namespace);ok{
+		for i,range_svc:=range list.([]*corev1.Service){
+			if range_svc.Name==svc.Name{
+				newList:= append(list.([]*corev1.Service)[:i], list.([]*corev1.Service)[i+1:]...)
+				this.data.Store(svc.Namespace,newList)
+				break
+			}
+		}
+	}
+}
+func(this *ServiceMapStruct) ListAll(ns string)[]*models.ServiceModel{
+	if list,ok:=this.data.Load(ns);ok{
+		newList:=list.([]*corev1.Service)
+		sort.Sort(CoreV1Service(newList))//  按时间倒排序
+		ret:=make([]*models.ServiceModel,len(newList))
+		for i,item:=range newList{
+			ret[i]=&models.ServiceModel{
+				Name:item.Name,
+				CreateTime:item.CreationTimestamp.Format("2006-01-02 15:04:05"),
+				NameSpace:item.Namespace,
+			}
+		}
+		return ret
+	}
+	return []*models.ServiceModel{} //返回空列表
 }

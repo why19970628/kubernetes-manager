@@ -20,3 +20,6 @@ func(*ServiceConfig) PodService() *services.PodService{
 func(*ServiceConfig) Helper() *services.Helper{
 	return services.NewHelper()
 }
+func(*ServiceConfig) IngressService() *services.IngressService{
+	return services.NewIngressService()
+}
