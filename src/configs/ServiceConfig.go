@@ -17,3 +17,6 @@ func(*ServiceConfig) DeploymentService() *services.DeploymentService{
 func(*ServiceConfig) PodService() *services.PodService{
 	return services.NewPodService()
 }
+func(*ServiceConfig) Helper() *services.Helper{
+	return services.NewHelper()
+}

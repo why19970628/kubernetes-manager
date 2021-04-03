@@ -5,7 +5,6 @@ import (
 	"github.com/shenyisyn/goft-gin/goft"
 	"k8sapi/src/configs"
 	"k8sapi/src/controllers"
-
 	"net/http"
 )
 func cross() gin.HandlerFunc {
@@ -21,11 +20,11 @@ func cross() gin.HandlerFunc {
 		if method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusNoContent)
 		}
+
 	}
 }
-
 func main() {
-	server := goft.Ignite(cross()).Config(
+	 server:=goft.Ignite(cross()).Config(
 		configs.NewK8sHandler(),  //1
 		configs.NewK8sConfig(), //2
 		configs.NewK8sMaps(), //3
@@ -35,15 +34,22 @@ func main() {
 			controllers.NewDeploymentCtl(),
 			controllers.NewPodCtl(),
 			controllers.NewUserCtl(),
+			controllers.NewWsCtl(),
+			controllers.NewNsCtl(),
+			controllers.NewIngressCtl(),
 		).
 		Attach(
 			//middlewares.NewCrosMiddleware(),//跨域中间件
 			)
-	//server.Static("/dashboard","./admin") // 设置一个静态的路径
-	//server.Static("/static","./admin/static") // 访问/static 到物理路径的./admin/static里
-	server.GET("/admin/*filepath", func(c *gin.Context) {
-		http.FileServer(FS(false)).ServeHTTP(c.Writer, c.Request)
-	}) // 和目录的admin对应
-	server.Launch()
+   //server.GET("/admin/*filepath", func(c *gin.Context) {
+	//  http.FileServer(FS(false)).ServeHTTP(c.Writer,c.Request)
+   //})
+
+   server.Launch()
+
+
+
+
+
 
 }

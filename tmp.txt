@@ -1,0 +1,4 @@
+	config:=&rest.Config{
+		Host:"http://121.36.226.197:9090",
+		BearerToken: "9e92eb8825d529819191f4eb9de32ab6",
+	}
