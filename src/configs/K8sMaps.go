@@ -32,5 +32,19 @@ func(this *K8sMaps) InitIngressMap() *services.IngressMapStruct{
 	return &services.IngressMapStruct{}
 }
 
+//初始化 Service map
+func(this *K8sMaps) InitServiceMap() *services.ServiceMapStruct{
+	return &services.ServiceMapStruct{}
+}
+
+//初始化 Secret map
+func(this *K8sMaps) InitSecretMap() *services.SecretMapStruct{
+	return &services.SecretMapStruct{}
+}
+
+//初始化 ConfigMap map
+func(this *K8sMaps) InitConfigMap() *services.ConfigMapStruct{
+	return &services.ConfigMapStruct{}
+}
 
 

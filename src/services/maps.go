@@ -5,6 +5,7 @@ import (
 	"k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
+	"k8sapi/src/helpers"
 	"k8sapi/src/models"
 	"reflect"
 	"sort"
@@ -376,4 +377,154 @@ func(this *ServiceMapStruct) ListAll(ns string)[]*models.ServiceModel{
 		return ret
 	}
 	return []*models.ServiceModel{} //返回空列表
+}
+
+
+
+type CoreV1Secret []*corev1.Secret
+func(this CoreV1Secret) Len() int{
+	return len(this)
+}
+func(this CoreV1Secret) Less(i, j int) bool{
+	//根据时间排序    倒排序
+	return this[i].CreationTimestamp.Time.After(this[j].CreationTimestamp.Time)
+}
+func(this CoreV1Secret) Swap(i, j int){
+	this[i],this[j]=this[j],this[i]
+}
+//SecretMap
+type SecretMapStruct struct {
+	data sync.Map   // [ns string] []*v1.Secret
+}
+func(this *SecretMapStruct) Get(ns string,name string) *corev1.Secret{
+	if items,ok:=this.data.Load(ns);ok{
+		for _,item:=range items.([]*corev1.Secret){
+			if item.Name==name{
+				return item
+			}
+		}
+	}
+	return nil
+}
+func(this *SecretMapStruct) Add(item *corev1.Secret){
+	if list,ok:=this.data.Load(item.Namespace);ok{
+		list=append(list.([]*corev1.Secret),item)
+		this.data.Store(item.Namespace,list)
+	}else{
+		this.data.Store(item.Namespace,[]*corev1.Secret{item})
+	}
+}
+func(this *SecretMapStruct) Update(item *corev1.Secret) error {
+	if list,ok:=this.data.Load(item.Namespace);ok{
+		for i,range_item:=range list.([]*corev1.Secret){
+			if range_item.Name==item.Name{
+				list.([]*corev1.Secret)[i]=item
+			}
+		}
+		return nil
+	}
+	return fmt.Errorf("Secret-%s not found",item.Name)
+}
+func(this *SecretMapStruct) Delete(svc *corev1.Secret){
+	if list,ok:=this.data.Load(svc.Namespace);ok{
+		for i,range_item:=range list.([]*corev1.Secret){
+			if range_item.Name==svc.Name{
+				newList:= append(list.([]*corev1.Secret)[:i], list.([]*corev1.Secret)[i+1:]...)
+				this.data.Store(svc.Namespace,newList)
+				break
+			}
+		}
+	}
+}
+func(this *SecretMapStruct) ListAll(ns string)[]*corev1.Secret{
+	if list,ok:=this.data.Load(ns);ok{
+		newList:=list.([]*corev1.Secret)
+		sort.Sort(CoreV1Secret(newList))//  按时间倒排序
+
+		return newList
+	}
+	return []*corev1.Secret{} //返回空列表
+}
+
+
+//ConfigMapMap
+
+type CoreV1ConfigMap []*cm
+func(this CoreV1ConfigMap) Len() int{
+	return len(this)
+}
+func(this CoreV1ConfigMap) Less(i, j int) bool{
+	//根据时间排序    倒排序
+	return this[i].cmdata.CreationTimestamp.Time.After(this[j].cmdata.CreationTimestamp.Time)
+}
+func(this CoreV1ConfigMap) Swap(i, j int){
+	this[i],this[j]=this[j],this[i]
+}
+//给configmap的特殊struct
+type cm struct {
+	cmdata *corev1.ConfigMap
+	md5 string  //对cm的data进行md5存储，防止过度更新
+}
+
+func newcm(c *corev1.ConfigMap) *cm  {
+	return &cm{
+		cmdata:c,//原始对象
+		md5:helpers.Md5Data(c.Data),
+	}
+}
+type ConfigMapStruct struct {
+	data sync.Map   // [ns string] []*cm
+}
+func(this *ConfigMapStruct) Get(ns string,name string) *corev1.ConfigMap{
+	if items,ok:=this.data.Load(ns);ok{
+		for _,item:=range items.([]*cm){
+			if item.cmdata.Name==name{
+				return item.cmdata
+			}
+		}
+	}
+	return nil
+}
+func(this *ConfigMapStruct) Add(item *corev1.ConfigMap){
+	if list,ok:=this.data.Load(item.Namespace);ok{
+		list=append(list.([]*cm),newcm(item))
+		this.data.Store(item.Namespace,list)
+	}else{
+		this.data.Store(item.Namespace,[]*cm{newcm(item)})
+	}
+}
+//返回值 是true 或false . true代表有值更新了， 否则返回false
+func(this *ConfigMapStruct) Update(item *corev1.ConfigMap) bool {
+	if list,ok:=this.data.Load(item.Namespace);ok{
+		for i,range_item:=range list.([]*cm){
+			//这里做判断，如果没变化就不做 更新
+			if range_item.cmdata.Name==item.Name && !helpers.CmIsEq(range_item.cmdata.Data,item.Data){
+				list.([]*cm)[i]=newcm(item)
+				return true //代表有值更新了
+			}
+		}
+	}
+	return 	  false
+}
+func(this *ConfigMapStruct) Delete(svc *corev1.ConfigMap){
+	if list,ok:=this.data.Load(svc.Namespace);ok{
+		for i,range_item:=range list.([]*cm){
+			if range_item.cmdata.Name==svc.Name{
+				newList:= append(list.([]*cm)[:i], list.([]*cm)[i+1:]...)
+				this.data.Store(svc.Namespace,newList)
+				break
+			}
+		}
+	}
+}
+func(this *ConfigMapStruct) ListAll(ns string)[]*corev1.ConfigMap{
+	ret:=[]*corev1.ConfigMap{}
+	if list,ok:=this.data.Load(ns);ok{
+		newList:=list.([]*cm)
+		sort.Sort(CoreV1ConfigMap(newList))//  按时间倒排序
+		for _,cm:=range newList{
+			ret=append(ret,cm.cmdata)
+		}
+	}
+	return ret//返回空列表
 }

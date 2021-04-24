@@ -15,9 +15,11 @@ import (
 const (
 	OPTION_CROS=iota
 	OPTION_LIMIT
+	OPTION_REWRITE
 )
 const (
 	OPTOINS_CROS_TAG="nginx.ingress.kubernetes.io/enable-cors"
+	OPTIONS_REWRITE_TAG="nginx.ingress.kubernetes.io/rewrite-enable"
 )
 //@service
 type IngressService struct {
@@ -106,6 +108,10 @@ func(this *IngressService) getIngressOptions(t int,item *v1beta1.Ingress) bool{
 		if _,ok:=item.Annotations[OPTOINS_CROS_TAG];ok{
 			return true
 		}
+	case OPTION_REWRITE:
+		if _,ok:=item.Annotations[OPTIONS_REWRITE_TAG];ok{
+			return true
+		}
 	}
 	return false
 }
@@ -121,6 +127,7 @@ func(this *IngressService) ListIngress(ns string) []*models.IngressModel {
 			Host:item.Spec.Rules[0].Host,
 			Options:models.IngressOptions{
 				IsCros:this.getIngressOptions(OPTION_CROS,item),
+				IsRewrite:this.getIngressOptions(OPTION_REWRITE,item),
 			},
 		}
 	}

@@ -227,3 +227,89 @@ func(this *ServiceHandler) OnDelete(obj interface{}){
 		},
 	)
 }
+
+
+//Secret相关的handler
+type SecretHandler struct {
+	SecretMap *SecretMapStruct  `inject:"-"`
+	SecretService *SecretService  `inject:"-"`
+}
+func(this *SecretHandler) OnAdd(obj interface{}){
+	this.SecretMap.Add(obj.(*corev1.Secret))
+	ns:=obj.(*corev1.Secret).Namespace
+	wscore.ClientMap.SendAll(
+		gin.H{
+			"type":"secret",
+			"result":gin.H{"ns":ns,
+				"data":this.SecretService.ListSecret(ns)},
+		},
+	)
+}
+func(this *SecretHandler) OnUpdate(oldObj, newObj interface{}){
+	err:=this.SecretMap.Update(newObj.(*corev1.Secret))
+	if err!=nil{
+		log.Println(err)
+		return
+	}
+	ns:=newObj.(*corev1.Secret).Namespace
+	wscore.ClientMap.SendAll(
+		gin.H{
+			"type":"secret",
+			"result":gin.H{"ns":ns,
+				"data":this.SecretService.ListSecret(ns)},
+		},
+	)
+}
+func(this *SecretHandler) OnDelete(obj interface{}){
+	this.SecretMap.Delete(obj.(*corev1.Secret))
+	ns:=obj.(*corev1.Secret).Namespace
+	wscore.ClientMap.SendAll(
+		gin.H{
+			"type":"secret",
+			"result":gin.H{"ns":ns,
+				"data":this.SecretService.ListSecret(ns)},
+		},
+	)
+}
+
+
+//CofigMap相关的handler
+type ConfigMapHandler struct {
+	ConfigMap *ConfigMapStruct  `inject:"-"`
+	ConfigMapService *ConfigMapService  `inject:"-"`
+}
+func(this *ConfigMapHandler) OnAdd(obj interface{}){
+	this.ConfigMap.Add(obj.(*corev1.ConfigMap))
+	ns:=obj.(*corev1.ConfigMap).Namespace
+	wscore.ClientMap.SendAll(
+		gin.H{
+			"type":"cm",
+			"result":gin.H{"ns":ns,
+				"data":this.ConfigMapService.ListConfigMap(ns)},
+		},
+	)
+}
+func(this *ConfigMapHandler) OnUpdate(oldObj, newObj interface{}){
+	//重点： 只要update返回true 才会发送 。否则不发送
+	if this.ConfigMap.Update(newObj.(*corev1.ConfigMap)){
+		ns:=newObj.(*corev1.ConfigMap).Namespace
+		wscore.ClientMap.SendAll(
+			gin.H{
+				"type":"cm",
+				"result":gin.H{"ns":ns,
+					"data":this.ConfigMapService.ListConfigMap(ns)},
+			},
+		)
+	}
+}
+func(this *ConfigMapHandler) OnDelete(obj interface{}){
+	this.ConfigMap.Delete(obj.(*corev1.ConfigMap))
+	ns:=obj.(*corev1.ConfigMap).Namespace
+	wscore.ClientMap.SendAll(
+		gin.H{
+			"type":"cm",
+			"result":gin.H{"ns":ns,
+				"data":this.ConfigMapService.ListConfigMap(ns)},
+		},
+	)
+}

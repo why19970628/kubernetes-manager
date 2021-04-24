@@ -10,6 +10,15 @@ type WsClient struct {
 	readChan chan *WsMessage  //读队列 (chan)
 	closeChan chan byte  // 失败队列
 }
+
+func (this *WsClient) Lock() {
+
+}
+
+func (this *WsClient) Unlock() {
+
+}
+
 func NewWsClient(conn *websocket.Conn) *WsClient {
 	return &WsClient{conn: conn,readChan:make(chan *WsMessage),closeChan:make(chan byte)}
 }

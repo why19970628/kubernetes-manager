@@ -38,6 +38,8 @@ func main() {
 			controllers.NewNsCtl(),
 			controllers.NewIngressCtl(),
 			controllers.NewSvcCtl(),
+			controllers.NewSecretCtl(),
+			controllers.NewConfigMapCtl(),
 		).
 		Attach(
 			//middlewares.NewCrosMiddleware(),//跨域中间件
@@ -47,10 +49,4 @@ func main() {
    //})
 
    server.Launch()
-
-
-
-
-
-
 }

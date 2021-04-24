@@ -25,17 +25,20 @@ func(this *ClientMapStruct) Store(conn *websocket.Conn){
 
 //向所有客户端 发送消息--发送资源列表
 func(this *ClientMapStruct) SendAll(v interface{}){
-
 	this.data.Range(func(key, value interface{}) bool {
-		this.lock.Lock() //这里加个锁，因为目前不支持并发写wsClient
-		defer this.lock.Unlock()
-		c:=value.(*WsClient).conn
- 			err:=c.WriteJSON(v)
+		//this.lock.Lock() //这里加个锁，因为目前不支持并发写wsClient
+		//defer this.lock.Unlock()
+		func(){
+			c:=value.(*WsClient).conn
+			value.(*WsClient).Lock()
+			defer value.(*WsClient).Unlock()
+			err:=c.WriteJSON(v)
 			if err!=nil{
 				this.Remove(c)
 				log.Println(err)
 			}
-			return true
+		}()
+		return true
 	})
 }
 func(this *ClientMapStruct) Remove(conn *websocket.Conn){

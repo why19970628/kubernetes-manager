@@ -30,3 +30,17 @@ func(this *K8sHandler) IngressHandler() *services.IngressHandler{
 	return &services.IngressHandler{}
 }
 
+// ServiceHandler
+func(this *K8sHandler) ServiceHandler() *services.ServiceHandler{
+	return &services.ServiceHandler{}
+}
+
+// SecretHandler
+func(this *K8sHandler) SecretHandler() *services.SecretHandler{
+	return &services.SecretHandler{}
+}
+
+// ConfigMapHandler
+func(this *K8sHandler) ConfigMapHandler() *services.ConfigMapHandler{
+	return &services.ConfigMapHandler{}
+}

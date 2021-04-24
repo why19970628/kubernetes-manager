@@ -5,6 +5,7 @@ import (
 	"github.com/shenyisyn/goft-gin/goft"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 
 	"k8sapi/src/models"
 	"k8sapi/src/services"
@@ -51,8 +52,22 @@ func(this *IngressCtl) ListAll(c *gin.Context) goft.Json{
 
 	}
 }
+
+func(this *IngressCtl) GetIngressForYaml(c *gin.Context) goft.Json{
+	ns:=c.DefaultQuery("ns","default")
+	name:=c.DefaultQuery("name","")
+	ingress,err:=this.Client.NetworkingV1beta1().Ingresses(ns).Get(c,name,v1.GetOptions{})
+	goft.Error(err)
+	b,err:=yaml.Marshal(ingress)
+	goft.Error(err)
+	return gin.H{
+		"code":20000,
+		"data":string(b), //暂时 不分页
+	}
+}
 func(this *IngressCtl)  Build(goft *goft.Goft){
 	goft.Handle("GET","/ingress",this.ListAll)
 	goft.Handle("DELETE","/ingress",this.RmIngress)
 	goft.Handle("POST","/ingress",this.PostIngress)
+	goft.Handle("GET","/ingressyaml",this.GetIngressForYaml)
 }

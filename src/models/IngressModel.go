@@ -1,9 +1,10 @@
 package models
 
+//选项，显示用（列表)
 type IngressOptions struct {
 	IsCros bool
+	IsRewrite bool
 }
-
 // 列表用
 type IngressModel struct {
 	Name string
@@ -11,6 +12,7 @@ type IngressModel struct {
 	CreateTime string
 	Host string
 	Options IngressOptions
+
 }
 
 ///下面的模型是提交（新增或修改用)
