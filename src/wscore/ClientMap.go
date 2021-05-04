@@ -16,10 +16,10 @@ type ClientMapStruct struct {
 	lock sync.Mutex
 }
 func(this *ClientMapStruct) Store(conn *websocket.Conn){
-	 wsClient:=NewWsClient(conn)
-	 this.data.Store(conn.RemoteAddr().String(),wsClient)
-	 go wsClient.Ping(time.Second*1)
-	 go wsClient.ReadLoop() //处理读 循环
+	wsClient:=NewWsClient(conn)
+	this.data.Store(conn.RemoteAddr().String(),wsClient)
+	go wsClient.Ping(time.Second*1)
+	go wsClient.ReadLoop() //处理读 循环
 	// go wsClient.HandlerLoop() //处理 总控制循环
 }
 
@@ -38,11 +38,13 @@ func(this *ClientMapStruct) SendAll(v interface{}){
 				log.Println(err)
 			}
 		}()
+
 		return true
 	})
 }
+
+
 func(this *ClientMapStruct) Remove(conn *websocket.Conn){
 	this.data.Delete(conn.RemoteAddr().String())
 }
-
 
