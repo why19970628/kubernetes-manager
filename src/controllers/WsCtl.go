@@ -13,47 +13,49 @@ import (
 
 //@Controller
 type WsCtl struct {
-	Client *kubernetes.Clientset  `inject:"-"`
-	Config *rest.Config  `inject:"-"`
+	Client *kubernetes.Clientset `inject:"-"`
+	Config *rest.Config          `inject:"-"`
 }
 
 func NewWsCtl() *WsCtl {
 	return &WsCtl{}
 }
 
-func(this *WsCtl) Connect(c *gin.Context) (v goft.Void)    {
-	client,err:=wscore.Upgrader.Upgrade(c.Writer,c.Request,nil)  //升级
-	if err!=nil{
+func (this *WsCtl) Connect(c *gin.Context) (v goft.Void) {
+	client, err := wscore.Upgrader.Upgrade(c.Writer, c.Request, nil) //升级
+	if err != nil {
 		log.Println(err)
 		return
-	}else{
+	} else {
 		wscore.ClientMap.Store(client)
-
 		return
 	}
 }
-func(this *WsCtl) PodConnect(c *gin.Context) (v goft.Void){
-	ns:=c.Query("ns")
-	pod:=c.Query("pod")
-	container:=c.Query("c")
-	wsClient,err:=wscore.Upgrader.Upgrade(c.Writer,c.Request,nil)
-	if err!=nil {
+
+func (this *WsCtl) PodConnect(c *gin.Context) (v goft.Void) {
+	ns := c.Query("ns")
+	pod := c.Query("pod")
+	container := c.Query("c")
+	wsClient, err := wscore.Upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
 		return
 	}
-	shellClient:=wscore.NewWsShellClient(wsClient)
-	err=helpers.HandleCommand(ns,pod,container,this.Client,this.Config,[]string{"sh"}).
+	shellClient := wscore.NewWsShellClient(wsClient)
+	err = helpers.HandleCommand(ns, pod, container, this.Client, this.Config, []string{"sh"}).
 		Stream(remotecommand.StreamOptions{
-			Stdin:shellClient,
-			Stdout:shellClient,
-			Stderr:shellClient,
-			Tty:true,
+			Stdin:  shellClient,
+			Stdout: shellClient,
+			Stderr: shellClient,
+			Tty:    true,
 		})
 	return
 }
-func(this *WsCtl)  Build(goft *goft.Goft){
-	goft.Handle("GET","/ws",this.Connect)
-	goft.Handle("GET","/podws",this.PodConnect)
+
+func (this *WsCtl) Build(goft *goft.Goft) {
+	goft.Handle("GET", "/ws", this.Connect)
+	goft.Handle("GET", "/podws", this.PodConnect)
 }
-func(this *WsCtl) Name() string{
+
+func (this *WsCtl) Name() string {
 	return "WsCtl"
 }
